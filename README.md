@@ -89,6 +89,13 @@ python predict.py \
 ```
 You can enter a sample text directly when prompted. The model will return a list of predicted emotions.
 
+## Running the server
+
+To run the server:
+```bash
+python main.py
+```
+
 ## Evaluation
 
 Custom metrics implemented include:
