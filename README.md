@@ -45,16 +45,19 @@ pip install -r requirements.txt
 
 ## Project Structure
 
-.
+```
+nlp-milestone-3/
 ├── train.py                  # Training script
-├── predict.py               # Predict emotion labels on new text
-├── test_random.py           # Random testing and debugging
+├── predict.py                # Predict emotion labels on new text
+├── test_random.py            # Random testing and debugging
 ├── models/
-│   └── bert_classifier.py   # BERT model architecture
+│   └── bert_classifier.py    # BERT model architecture
 ├── utils/
-│   ├── preprocessing.py     # Text cleaning and tokenization
-│   └── evaluation.py        # Custom evaluation metrics
-└── requirements.txt
+│   ├── preprocessing.py      # Text cleaning and tokenization
+│   └── evaluation.py         # Custom evaluation metrics
+├── requirements.txt          # Python dependencies
+└── README.md                 # Project documentation
+```
 
 ## Training
 
