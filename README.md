@@ -69,7 +69,12 @@ nlp-milestone-3/
 
 To train the model on a dataset (must contain text and five binary label columns):
 ```bash
-python train.py
+python train.py \
+--dataset data/track-a.csv \
+--test-size 0.2 \
+--random-state 123 \
+--device mps \
+--epoch 10
 ```
 Modify the training logic and dataset path as needed inside train.py.
 
@@ -77,7 +82,10 @@ Modify the training logic and dataset path as needed inside train.py.
 
 To predict emotions for custom input text:
 ```bash
-python predict.py
+python predict.py \
+--text "I am feeling good today. Thanks for asking." \
+--model model.pth \
+--device cpu
 ```
 You can enter a sample text directly when prompted. The model will return a list of predicted emotions.
 

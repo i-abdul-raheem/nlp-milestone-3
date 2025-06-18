@@ -3,16 +3,11 @@ from transformers import BertTokenizer
 import pandas as pd
 from models.bert_classifier import BERTMultiLabelClassifier
 from utils.preprocessing import clean_text
-import numpy as np
+import argparse
 
-# Load model and tokenizer
-device = torch.device("mps" if torch.backends.mps.is_available() else "cpu")
 tokenizer = BertTokenizer.from_pretrained('bert-base-uncased')
 
 model = BERTMultiLabelClassifier()
-model.load_state_dict(torch.load("model.pth", map_location=device))  # Adjust path if needed
-model.to(device)
-model.eval()
 
 # Define label list
 LABELS = ['anger', 'fear', 'joy', 'sadness', 'surprise']  # Update if different
@@ -34,11 +29,23 @@ def predict(texts):
     return results
 
 if __name__ == "__main__":
-    sample_texts = [
-        "I'm feeling so happy and excited today!",
-        "This is the worst day of my life.",
-        "I don’t know what will happen, I’m scared."
-    ]
-    predictions = predict(sample_texts)
+    parser = argparse.ArgumentParser()
+    parser.add_argument("--text", type=str, required=True, help="Input text to analyze emotions")
+    parser.add_argument("--model", type=str, default="model.pth", help="Path to the trained model file")
+    parser.add_argument("--device", type=str, default="cpu", choices=["cpu", "cuda", "mps"], help="Device to run inference on")
+    args = parser.parse_args()
+
+    if args.device == "cuda" and torch.cuda.is_available():
+        device = torch.device("cuda")
+    elif args.device == "mps" and torch.backends.mps.is_available():
+        device = torch.device("mps")
+    else:
+        device = torch.device("cpu")
+        
+    model.load_state_dict(torch.load(args.model, map_location=device))
+    model.to(device)
+    model.eval()
+
+    predictions = predict([args.text])
     for p in predictions:
         print(f"Text: {p['text']}\nPredicted Emotions: {p['emotions']}\n")
