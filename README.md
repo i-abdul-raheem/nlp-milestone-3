@@ -43,6 +43,11 @@ source venv/bin/activate  # or venv\Scripts\activate on Windows
 pip install -r requirements.txt
 ```
 
+4.	Add the dataset file inside data directory:
+```
+data/track-a.csv
+```
+
 ## Project Structure
 
 ```
@@ -55,6 +60,7 @@ nlp-milestone-3/
 ├── utils/
 │   ├── preprocessing.py      # Text cleaning and tokenization
 │   └── evaluation.py         # Custom evaluation metrics
+├── data/                     # Dataset directory
 ├── requirements.txt          # Python dependencies
 └── README.md                 # Project documentation
 ```
