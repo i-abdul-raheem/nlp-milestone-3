@@ -1,10 +1,8 @@
 import torch
 import pandas as pd
-import random
 from transformers import BertTokenizer
 from models.bert_classifier import BERTMultiLabelClassifier
 from utils.preprocessing import clean_text
-import numpy as np
 
 # Config
 LABELS = ['anger', 'fear', 'joy', 'sadness', 'surprise']
