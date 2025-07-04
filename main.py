@@ -1,15 +1,19 @@
-from flask import Flask, render_template_string, request, jsonify
 import torch
 from transformers import BertTokenizer
 from models.bert_classifier import BERTMultiLabelClassifier
 from utils.preprocessing import clean_text
-
-app = Flask(__name__)
+import pandas as pd
+import os
+import argparse
 
 # Constants
 LABELS = ['anger', 'fear', 'joy', 'sadness', 'surprise']
 MODEL_PATH = "model.pth"
 DEVICE = torch.device("cuda" if torch.cuda.is_available() else "mps" if torch.backends.mps.is_available() else "cpu")
+
+
+if not os.path.exists(MODEL_PATH):
+    raise FileNotFoundError(f"Model file '{MODEL_PATH}' not found. Please train the model first.")
 
 # Load model and tokenizer
 tokenizer = BertTokenizer.from_pretrained('bert-base-uncased')
@@ -18,79 +22,54 @@ model.load_state_dict(torch.load(MODEL_PATH, map_location=DEVICE))
 model.to(DEVICE)
 model.eval()
 
-# HTML Template
-HTML_TEMPLATE = """
-<!DOCTYPE html>
-<html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Emotion Classifier</title>
-    <style>
-        body { font-family: Arial, sans-serif; margin: 0; padding: 2rem; background: #f4f4f4; }
-        .container { max-width: 600px; margin: auto; background: #fff; padding: 2rem; border-radius: 10px; box-shadow: 0 2px 5px rgba(0,0,0,0.1); }
-        textarea { width: 100%; height: 100px; padding: 10px; font-size: 1rem; }
-        button { margin-top: 1rem; padding: 10px 20px; font-size: 1rem; }
-        .result, .loading { margin-top: 1rem; font-size: 1.2rem; }
-    </style>
-    <script>
-        function handleSubmit(form) {
-            const button = form.querySelector("button");
-            const loading = document.getElementById("loading");
-            button.disabled = true;
-            loading.style.display = "block";
-        }
-    </script>
-</head>
-<body>
-    <div class="container">
-        <h2>Emotion Classifier</h2>
-        <form method="post" onsubmit="handleSubmit(this)">
-            <textarea name="text" placeholder="Enter your text here" required>{{ request.form.get('text', '') }}</textarea>
-            <button type="submit">Predict</button>
-        </form>
-        <div id="loading" class="loading" style="display: none;">Predicting...</div>
-        {% if prediction %}
-            <div class="result">
-                <strong>Predicted Emotion(s):</strong> {{ prediction }}
-            </div>
-        {% endif %}
-    </div>
-</body>
-</html>
-"""
+def predict(csv_file_path):
+    df = pd.read_csv(csv_file_path)
+    if "text" not in df.columns:
+        raise ValueError("CSV file must contain a 'text' column.")
 
-def predict_emotions(text):
-    cleaned = clean_text(text)
-    encodings = tokenizer([cleaned], padding=True, truncation=True, max_length=128, return_tensors='pt')
+    texts = df["text"].fillna("").tolist()
+    cleaned_texts = [clean_text(text) for text in texts]
+    
+    encodings = tokenizer(cleaned_texts, padding=True, truncation=True, max_length=128, return_tensors='pt')
     input_ids = encodings['input_ids'].to(DEVICE)
     attention_mask = encodings['attention_mask'].to(DEVICE)
 
+    all_predictions = []
     with torch.no_grad():
         outputs = model(input_ids=input_ids, attention_mask=attention_mask)
-        predictions = (outputs > 0.5).int().cpu().numpy()[0]
+        predictions = (outputs > 0.5).int().cpu().numpy()
 
-    emotions = [LABELS[i] for i, val in enumerate(predictions) if val == 1]
-    return emotions if emotions else ["neutral"]
+        for pred in predictions:
+            all_predictions.append(pred.tolist())
 
-@app.route("/", methods=["GET", "POST"])
-def index():
-    prediction = None
-    if request.method == "POST":
-        text = request.form.get("text", "")
-        if text:
-            prediction = ", ".join(predict_emotions(text))
-    return render_template_string(HTML_TEMPLATE, prediction=prediction)
-
-@app.route("/api/predict", methods=["POST"])
-def api_predict():
-    data = request.get_json()
-    if not data or "text" not in data:
-        return jsonify({"error": "Missing 'text' in request"}), 400
-
-    text = data["text"]
-    emotions = predict_emotions(text)
-    return jsonify({"text": text, "emotions": emotions})
+    return all_predictions
 
 if __name__ == "__main__":
-    app.run(debug=True)
+    
+    parser = argparse.ArgumentParser()
+    parser.add_argument("--csv_path", type=str, required=True, help="Input CSV file path to analyze emotions")
+    
+    args = parser.parse_args()
+    if args.csv_path:
+        if not os.path.isfile(args.csv_path):
+            raise FileNotFoundError(f"CSV file '{args.csv_path}' does not exist.")
+        
+        predictions = predict(args.csv_path)
+        print(predictions)
+        
+        formatted_predictions = []
+        for pred in predictions:
+            emotions = [LABELS[i] for i, val in enumerate(pred) if val == 1]
+            formatted_predictions.append(emotions)
+        
+        print(formatted_predictions)
+    else:
+        print("Please provide a valid CSV file path using --csv argument.")
+        exit(1)
+
+# Example usage:
+# python main.py --csv data/track-a.csv
+# This will read the CSV file, clean the text, and output the predicted emotions.
+# Ensure the CSV file has a 'text' column with the text data to analyze.
+# The output will be a list of dictionaries with the detected emotions for each text entry.
+# Make sure to have the necessary libraries installed and the model trained before running this script.

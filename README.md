@@ -53,8 +53,8 @@ data/track-a.csv
 ```
 nlp-milestone-3/
 ├── train.py                  # Training script
+├── main.py                   # Main script
 ├── predict.py                # Predict emotion labels on new text
-├── test_random.py            # Random testing and debugging
 ├── models/
 │   └── bert_classifier.py    # BERT model architecture
 ├── utils/
@@ -88,13 +88,6 @@ python predict.py \
 --device cpu
 ```
 You can enter a sample text directly when prompted. The model will return a list of predicted emotions.
-
-## Running the server
-
-To run the server:
-```bash
-python main.py
-```
 
 ## Evaluation
 
