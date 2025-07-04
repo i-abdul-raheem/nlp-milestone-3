@@ -23,8 +23,40 @@ model.to(DEVICE)
 model.eval()
 
 def predict(csv_file_path):
-    df = pd.read_csv(csv_file_path)
-    if "text" not in df.columns:
+    """ Predict emotions from text in a CSV file.
+
+    Args:
+        csv_file_path (str): Path to the CSV file containing text data.
+
+    Returns:
+        list: List of predictions for each text entry in the CSV.
+    """
+    if not os.path.isfile(csv_file_path):
+        raise FileNotFoundError(f"CSV file '{csv_file_path}' does not exist.")
+
+    # Read CSV file
+    print(f"Reading CSV file: {csv_file_path}")
+    if not csv_file_path.endswith('.csv'):
+        raise ValueError("Input file must be a CSV file.")
+
+    # Load the CSV file into a DataFrame
+    print("Loading CSV file...")
+    try:
+        df = pd.read_csv(csv_file_path)
+    except Exception as e:
+        raise ValueError(f"Error reading CSV file: {e}")
+
+    # Check if 'text' column exists
+    print("Checking for 'text' column in the CSV file...")
+    if df.empty:
+        raise ValueError("CSV file is empty.")
+    
+    if not isinstance(df, pd.DataFrame):
+        raise ValueError("CSV file content is not in DataFrame format.")
+
+    # Ensure 'text' column exists
+    print("Validating 'text' column in the CSV file...")
+    if 'text' not in df.columns:
         raise ValueError("CSV file must contain a 'text' column.")
 
     texts = df["text"].fillna("").tolist()
