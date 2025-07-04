@@ -104,4 +104,18 @@ if __name__ == "__main__":
     parser.add_argument("--epoch", type=int, default=7, help="Number of training epochs")
 
     args = parser.parse_args()
+    if not args.dataset:
+        raise ValueError("Please provide a valid dataset path using --dataset argument.")
+    
+    if not torch.cuda.is_available() and args.device == "cuda":
+        print("CUDA is not available. Falling back to CPU.")
+        args.device = "cpu"
+    
+    if args.device == "mps" and not torch.backends.mps.is_available():
+        print("MPS is not available. Falling back to CPU.")
+        args.device = "cpu"
+
+    print(f"Training on device: {args.device}")
+
+    # Start training
     train(args)
